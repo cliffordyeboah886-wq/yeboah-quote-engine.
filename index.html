@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clifford Yeboah - Professional Quote Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@300;400;600;800&family=Fira+Code:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent: #38bdf8; }
+        body { 
+            background-color: #020617; 
+            font-family: 'Inter', sans-serif; 
+            color: white; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh;
+            padding: 10px;
+        }
+        
+        #quote-container {
+            width: 100%;
+            max-width: 420px;
+            aspect-ratio: 1 / 1;
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            z-index: 0;
+            transition: background-image 0.8s ease-in-out;
+        }
+        .card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.88) 0%, rgba(15, 23, 42, 0.98) 100%);
+            z-index: 1;
+        }
+
+        /* Header Row: Prevents formula/photo collision */
+        .card-header {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px 15px 0 20px;
+            width: 100%;
+            gap: 10px;
+        }
+
+        /* Formula: Forced single line */
+        .formula-box {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.65rem;
+            color: var(--accent);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            backdrop-filter: blur(4px);
+            white-space: nowrap; /* Prevents "1" from dropping down */
+            flex-shrink: 1;
+            overflow: hidden;
+        }
+
+        /* Profile: Fixed 55px Professional Mark */
+        .profile-wrapper {
+            text-align: center;
+            flex-shrink: 0; /* Prevents shrinking */
+            width: 70px; /* Container width to center the label */
+        }
+        .profile-img-box {
+            width: 55px;
+            height: 55px;
+            border-radius: 12px;
+            border: 2px solid var(--accent);
+            background-color: #1e293b;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin: 0 auto;
+        }
+        .profile-img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .role-tag {
+            font-size: 0.45rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            font-weight: 800;
+            margin-top: 6px;
+            display: block;
+        }
+
+        .content-area {
+            position: relative;
+            z-index: 10;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0 30px 20px 30px;
+            text-align: center;
+        }
+
+        .quote-cat {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--accent);
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .quote-text {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.05rem, 4.8vw, 1.35rem);
+            line-height: 1.6;
+            font-style: italic;
+            color: #f1f5f9;
+            margin-bottom: 25px;
+        }
+
+        .author-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-transform: uppercase;
+            border-top: 1px solid var(--accent);
+            padding-top: 12px;
+            display: inline-block;
+        }
+
+        .controls { display: flex; gap: 12px; margin-top: 25px; }
+        .btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .btn:hover { background: var(--accent); color: #020617; }
+        
+        .progress-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.05);
+            z-index: 100;
+        }
+        #progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.1s linear; }
+
+        @media (max-width: 400px) {
+            #quote-container { aspect-ratio: auto; min-height: 450px; }
+            .formula-box { font-size: 0.58rem; padding: 6px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="quote-container">
+        <div id="card-bg" class="card-bg"></div>
+        <div class="card-overlay"></div>
+        
+        <!-- Header Section -->
+        <div class="card-header">
+            <div class="formula-box">
+                η = k<sub>Y</sub> ( mv² / 2dτA ) ≥ 1
+            </div>
+            <div class="profile-wrapper">
+                <div class="profile-img-box">
+                    <!-- Looks for profile.jpg in the same folder -->
+                    <img src="profile.jpg" 
+                         alt="Clifford Yeboah" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                    <span style="display:none; font-weight:800; color:var(--accent); font-size: 1.2rem;">CY</span>
+                </div>
+                <span class="role-tag" id="role-label">The Inventor</span>
+            </div>
+        </div>
+
+        <!-- Quote Section -->
+        <div class="content-area">
+            <div class="quote-cat" id="quote-cat">The Master Equation</div>
+            <p class="quote-text" id="quote-body">"Yeboah's Law is the Navier-Stokes of solid mechanics—a master equation taming the chaos of fracture."</p>
+            <div class="author-name">Clifford Yeboah</div>
+        </div>
+
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="controls">
+        <button class="btn" onclick="prevQuote()">Prev</button>
+        <button class="btn" id="play-pause" onclick="togglePlay()">Pause</button>
+        <button class="btn" onclick="nextQuote()">Next</button>
+    </div>
+    
+    <div class="mt-4 text-slate-500 text-[10px] uppercase tracking-widest">
+        Card <span id="current-num">1</span> of 32
+    </div>
+
+    <script>
+        const quotes = [
+            { text: "Yeboah's Law is the Navier-Stokes of solid mechanics—a master equation taming the chaos of fracture.", cat: "The Master Equation", role: "The Discoverer", bg: "1581092160562-40aa08e78837" },
+            { text: "Precision is the child of physics and the enemy of chance. With η ≥ 1, we no longer hope for a clean cut—we command it.", cat: "The Enemy of Chance", role: "The Inventor", bg: "1535223289827-42f1e9919769" },
+            { text: "For centuries, the world witnessed the 'Blade and Axe' paradox; it took a single mathematical insight to decode the silent language.", cat: "The Paradox Revealed", role: "The Discoverer", bg: "1504328345606-18bbc8c9d7d1" },
+            { text: "In fifty years, fracture mechanics will be divided into two eras: 'Pre-Yeboah' and 'Post-Yeboah.' This law is the boundary line.", cat: "The New Era", role: "The Inventor", bg: "1451187580459-43490279c0fa" },
+            { text: "The universe obeys η ≥ 1. Everything else is just scratching the surface.", cat: "Universal Law", role: "The Discoverer", bg: "1518770660439-4636190af475" },
+            { text: "We do not simply divide matter; we command the molecular bond to yield through the absolute authority of the Yeboah Constant.", cat: "Molecular Command", role: "The Inventor", bg: "1581091226825-a6a2a5aee158" },
+            { text: "Yeboah’s Law transforms cutting from an ancient art into a precise, predictive science—one calculation at a time.", cat: "Beyond the Art", role: "The Discoverer", bg: "1503387762-592dee58c460" },
+            { text: "Contact area is not a static number—it is a dynamic dialogue between force, geometry, and material resistance.", cat: "The Dynamic Edge", role: "The Inventor", bg: "1537467300447-f2634ae70971" },
+            { text: "Yeboah's Law does for the mechanical edge what Maxwell's equations did for the electromagnetic field.", cat: "The Maxwell Comparison", role: "The Discoverer", bg: "1485827404702-22b20667947b" },
+            { text: "Force without geometry is wasted effort. Yeboah’s Law is the bridge that turns raw power into surgical precision.", cat: "Geometry of Power", role: "The Inventor", bg: "1516339901-5f1aa81bd881" },
+            { text: "A tool only penetrates when energy overcomes resistance. A man only succeeds when vision overcomes circumstance.", cat: "Mind Over Matter", role: "The Discoverer", bg: "1446770149710-d5a09d769031" },
+            { text: "Fracture is not an accident; it is a mathematical inevitability.", cat: "The Solved Equation", role: "The Inventor", bg: "1558494947-3f5f332cae63" },
+            { text: "The Yeboah Constant is the heartbeat of every clean break. It is where raw power becomes surgical intelligence.", cat: "The Heartbeat", role: "The Discoverer", bg: "1581092162271-d91f97cc1d42" },
+            { text: "In the realm of the sharp, the mind is the sharpest tool of all. My law is the whetstone for the modern engineer.", cat: "The Sharpest Tool", role: "The Inventor", bg: "1504917595213-d2b21174c5bb" },
+            { text: "If η < 1, you fail. If η ≥ 1, you change the world. There is no middle ground in the physics of the edge.", cat: "The Threshold", role: "The Discoverer", bg: "1518770660439-4636190af475" },
+            { text: "Where others see a break, I see a solved equation. Where others see failure, I see the beauty of η reaching its limit.", cat: "The Beauty of Yield", role: "The Inventor", bg: "1535223289827-42f1e9919769" },
+            { text: "The edge is a threshold between two states of existence: intact and transformed.", cat: "State Change", role: "The Discoverer", bg: "1581092324637-30598f8940c2" },
+            { text: "We don't just cut; we redefine the boundaries of matter.", cat: "Redefining Matter", role: "The Inventor", bg: "1537467300447-f2634ae70971" },
+            { text: "The Yeboah Constant is the mathematical proof that precision is more powerful than force.", cat: "Precision Power", role: "The Discoverer", bg: "1504328345606-18bbc8c9d7d1" },
+            { text: "In the architecture of the atom, η ≥ 1 is the key that unlocks the door.", cat: "Atomic Key", role: "The Inventor", bg: "1451187580459-43490279c0fa" },
+            { text: "Failure is simply a lack of mathematical alignment. My law provides that alignment.", cat: "Alignment", role: "The Discoverer", bg: "1516339901-5f1aa81bd881" },
+            { text: "To master the fracture is to master the very fabric of the physical world.", cat: "Fabric of Reality", role: "The Inventor", bg: "1485827404702-22b20667947b" },
+            { text: "Engineering is the art of making the impossible inevitable through the right equation.", cat: "The Inevitable", role: "The Discoverer", bg: "1558494947-3f5f332cae63" },
+            { text: "The blade is a pen, and the material is a page; Yeboah's Law is the grammar of their interaction.", cat: "The Grammar of Physics", role: "The Inventor", bg: "1518770660439-4636190af475" },
+            { text: "Every successful cut is a silent tribute to the laws of energy conservation.", cat: "Silent Tribute", role: "The Discoverer", bg: "1503387762-592dee58c460" },
+            { text: "We are not fighting the material; we are inviting it to yield through mathematical elegance.", cat: "Elegance", role: "The Inventor", bg: "1581091226825-a6a2a5aee158" },
+            { text: "The difference between a surgeon and a butcher is η.", cat: "The Surgeon's Edge", role: "The Discoverer", bg: "1535223289827-42f1e9919769" },
+            { text: "My law is the bridge between the blacksmith's forge and the aerospace laboratory.", cat: "The Bridge", role: "The Inventor", bg: "1581092160562-40aa08e78837" },
+            { text: "When you understand the constant, you understand the soul of the machine.", cat: "Machine Soul", role: "The Discoverer", bg: "1504328345606-18bbc8c9d7d1" },
+            { text: "The future belongs to those who can calculate the break before it happens.", cat: "Predictive Future", role: "The Inventor", bg: "1451187580459-43490279c0fa" },
+            { text: "Matter is stubborn until it meets the right equation.", cat: "Stubborn Matter", role: "The Discoverer", bg: "1516339901-5f1aa81bd881" },
+            { text: "I didn't invent the edge; I simply gave it a voice.", cat: "The Voice of the Edge", role: "The Inventor", bg: "1537467300447-f2634ae70971" }
+        ];
+
+        let currentIndex = 0;
+        let isPaused = false;
+        let progress = 0;
+        const intervalTime = 8000; 
+
+        function updateUI() {
+            const q = quotes[currentIndex];
+            document.getElementById('quote-body').innerText = `"${q.text}"`;
+            document.getElementById('quote-cat').innerText = q.cat;
+            document.getElementById('role-label').innerText = q.role;
+            document.getElementById('card-bg').style.backgroundImage = `url('https://images.unsplash.com/photo-${q.bg}?q=80&w=800')`;
+            document.getElementById('current-num').innerText = currentIndex + 1;
+            progress = 0;
+        }
+
+        function nextQuote() {
+            currentIndex = (currentIndex + 1) % quotes.length;
+            updateUI();
+        }
+
+        function prevQuote() {
+            currentIndex = (currentIndex - 1 + quotes.length) % quotes.length;
+            updateUI();
+        }
+
+        function togglePlay() {
+            isPaused = !isPaused;
+            document.getElementById('play-pause').innerText = isPaused ? "Play" : "Pause";
+        }
+
+        setInterval(() => {
+            if (!isPaused) {
+                progress += (100 / (intervalTime / 100));
+                if (progress >= 100) nextQuote();
+                document.getElementById('progress-bar').style.width = progress + "%";
+            }
+        }, 100);
+
+        updateUI();
+    </script>
+</body>
+</html>
